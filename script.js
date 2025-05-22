@@ -5,7 +5,7 @@ let allElementTypesData = []; // For storing player position/type data
 let currentGameweek = null;
 
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
-// const CORS_PROXY_URL = '/api/fplproxy?url='; 
+const CORS_PROXY_URL = '/api/fplproxy?url='; 
 
 // --- DOM Element References ---
 let teamIdInput, fetchTeamButton, loadingIndicator, userTeamSquad, userTeamEpNext, suggestionsContent;
@@ -45,8 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {Promise<Object>} The parsed JSON data from the API.
  */
 async function fetchBootstrapData() {
-    const apiUrl = FPL_BOOTSTRAP_URL;
-    console.log(`Fetching FPL bootstrap data from: ${apiUrl}`);
+    const originalApiUrl = FPL_BOOTSTRAP_URL;
+    const apiUrl = `${CORS_PROXY_URL}${encodeURIComponent(originalApiUrl)}`;
+    console.log(`Fetching FPL bootstrap data via proxy from: ${apiUrl}`);
     try {
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -100,7 +101,7 @@ async function initializeApp() {
         
     } catch (error) {
         console.error("Failed to initialize the application:", error);
-        if(userTeamSquad) userTeamSquad.innerHTML = `<p class="error-message">Failed to load initial FPL data. Please try refreshing.</p>`;
+        if(userTeamSquad) userTeamSquad.innerHTML = `<p class="error-message">Failed to load initial FPL data: ${error.message}. Please try refreshing.</p>`;
     }
 }
 
@@ -138,7 +139,7 @@ async function handleAnalyseTeamClick() {
         }
     } catch (error) {
         if (userTeamSquad.innerHTML === '') { 
-            userTeamSquad.innerHTML = `<p class="error-message">An error occurred while fetching team data.</p>`;
+            userTeamSquad.innerHTML = `<p class="error-message">An error occurred while fetching team data: ${error.message}.</p>`;
         }
         console.error("Error in handleAnalyseTeamClick:", error);
     } finally {
@@ -155,20 +156,21 @@ async function handleAnalyseTeamClick() {
  * @returns {Promise<Object|null>} The team picks data or null on error.
  */
 async function fetchUserTeam(teamID, gameweekID) {
-    const fetchUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`;
-    console.log(`Fetching user team data from: ${fetchUrl}`);
+    const originalFetchUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`;
+    const fetchUrl = `${CORS_PROXY_URL}${encodeURIComponent(originalFetchUrl)}`;
+    console.log(`Fetching user team data via proxy from: ${fetchUrl}`);
     try {
         const response = await fetch(fetchUrl);
         if (!response.ok) {
-            let message = `Error fetching team data (Status: ${response.status}).`;
+            let message = `Error fetching team data (Status: ${response.status} for ${fetchUrl}).`;
             if(response.status === 404){
-                 message = `Team ID ${teamID} not found or data is private for Gameweek ${gameweekID}.`;
+                 message = `Team ID ${teamID} not found or data is private for Gameweek ${gameweekID} (via proxy).`;
             }
             
             // Display error in relevant area (user or rival) based on which loading indicator is visible
-            if (loadingIndicator.style.display === 'inline') { // Check if it's the user team analysis
+            if (loadingIndicator.style.display === 'inline') { 
                  userTeamSquad.innerHTML = `<p class="error-message">${message}</p>`;
-            } else if (rivalLoadingIndicator.style.display === 'inline') { // Check if it's the rival comparison
+            } else if (rivalLoadingIndicator.style.display === 'inline') { 
                  comparisonResults.innerHTML = `<p class="error-message">${message}</p>`;
             }
             
@@ -181,11 +183,9 @@ async function fetchUserTeam(teamID, gameweekID) {
         console.error(`Error fetching user team data for ID ${teamID}:`, error);
         // Generic message if not set by HTTP error, specific to context
         if (loadingIndicator.style.display === 'inline' && userTeamSquad.innerHTML === '') {
-            userTeamSquad.innerHTML = `<p class="error-message">Failed to fetch team data for Team ID ${teamID}. Check ID and network.</p>`;
+            userTeamSquad.innerHTML = `<p class="error-message">Failed to fetch team data for Team ID ${teamID}: ${error.message}. Check ID and network.</p>`;
         } else if (rivalLoadingIndicator.style.display === 'inline' && comparisonResults.innerHTML === '') {
-            // This case might be tricky if one team fetch fails in Promise.all for rival comparison
-            // The Promise.all catch in handleCompareTeamClick should generally handle this.
-            comparisonResults.innerHTML = `<p class="error-message">Failed to fetch data for one of the teams (ID: ${teamID}). Check ID and network.</p>`;
+            comparisonResults.innerHTML = `<p class="error-message">Failed to fetch data for one of the teams (ID: ${teamID}): ${error.message}. Check ID and network.</p>`;
         }
         return null;
     }
@@ -205,8 +205,6 @@ function displayUserTeam(teamPicks) {
     }
 
     const squadList = document.createElement('ul');
-    // squadList.style.listStyleType = 'none'; // Moved to CSS
-    // squadList.style.padding = '0'; // Moved to CSS
 
     teamPicks.forEach(pick => {
         const playerDetails = getPlayerDetailsById(pick.element);
@@ -222,10 +220,6 @@ function displayUserTeam(teamPicks) {
         totalEpNext += epNextValue * pick.multiplier;
 
         const listItem = document.createElement('li');
-        // listItem.style.marginBottom = '0.5rem'; // Moved to CSS
-        // listItem.style.padding = '0.5rem'; // Moved to CSS
-        // listItem.style.border = '1px solid #eee'; // Moved to CSS
-        // listItem.style.borderRadius = '4px'; // Moved to CSS
         
         let captaincyInfo = '';
         if (pick.is_captain) captaincyInfo = ' (C)';
@@ -261,7 +255,7 @@ function displayBasicOptimisation(currentPicks) {
     );
 
     if (!availablePlayers.length) {
-        suggestionsContent.innerHTML = "<p>No alternative players available for suggestion based on current filters.</p>"; // Not an error, but info
+        suggestionsContent.innerHTML = "<p>No alternative players available for suggestion based on current filters.</p>";
         return;
     }
 
@@ -270,7 +264,7 @@ function displayBasicOptimisation(currentPicks) {
 
     if (bestAlternative) {
         const teamName = allTeamsData.find(t => t.id === bestAlternative.team)?.name || 'N/A';
-        const suggestionEl = document.createElement('div'); // Using div as per CSS styling for direct p
+        const suggestionEl = document.createElement('div'); 
         suggestionEl.innerHTML = `
             <h4>Top Available Player Suggestion:</h4>
             <p>Consider adding: <strong>${bestAlternative.web_name}</strong> (Team: ${teamName})</p>
@@ -279,7 +273,7 @@ function displayBasicOptimisation(currentPicks) {
         `;
         suggestionsContent.appendChild(suggestionEl);
     } else {
-        suggestionsContent.innerHTML = "<p>Could not find a suitable player suggestion at this time.</p>"; // Not an error
+        suggestionsContent.innerHTML = "<p>Could not find a suitable player suggestion at this time.</p>";
     }
 }
 
@@ -308,32 +302,29 @@ async function handleCompareTeamClick() {
     compareTeamButton.disabled = true;
     rivalLoadingIndicator.textContent = 'Comparing teams...';
     rivalLoadingIndicator.style.display = 'inline';
-    comparisonResults.innerHTML = ''; // Clear previous results, show loading text via indicator
+    comparisonResults.innerHTML = ''; 
 
     try {
-        // Important: Ensure fetchUserTeam sets error messages in the correct container
-        // (userTeamSquad for initial analysis, comparisonResults for rival comparison)
-        // The logic inside fetchUserTeam attempts this by checking which indicator is visible.
         const [userTeamData, rivalTeamData] = await Promise.all([
-            fetchUserTeam(userTeamID, currentGameweek), // Context for error display is tricky here
-            fetchUserTeam(rivalTeamID, currentGameweek)  // Context for error display is tricky here
+            fetchUserTeam(userTeamID, currentGameweek), 
+            fetchUserTeam(rivalTeamID, currentGameweek)
         ]);
 
         if (userTeamData && userTeamData.picks && rivalTeamData && rivalTeamData.picks) {
             generateComparisonSuggestions(userTeamData.picks, rivalTeamData.picks);
         } else {
-            if (comparisonResults.innerHTML === '') { // Only set if fetchUserTeam didn't already set an error
+            if (comparisonResults.innerHTML === '') { 
                  comparisonResults.innerHTML = `<p class="error-message">Could not retrieve data for one or both teams. Please check IDs and try again.</p>`;
             }
         }
     } catch (error) {
         console.error("Error in handleCompareTeamClick:", error);
-        if (comparisonResults.innerHTML === '') { // Fallback error
-            comparisonResults.innerHTML = `<p class="error-message">An error occurred while comparing teams.</p>`;
+        if (comparisonResults.innerHTML === '') { 
+            comparisonResults.innerHTML = `<p class="error-message">An error occurred while comparing teams: ${error.message}.</p>`;
         }
     } finally {
         rivalLoadingIndicator.style.display = 'none';
-        rivalLoadingIndicator.textContent = 'Loading rival...'; // Reset text
+        rivalLoadingIndicator.textContent = 'Loading rival...'; 
         compareTeamButton.disabled = false;
     }
 }

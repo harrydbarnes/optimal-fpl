@@ -667,7 +667,7 @@
             nav {
                 position: fixed;
                 top: 0;
-                left: -100%;
+                left: -100% !important; /* Force hide nav panel */
                 width: 70%;
                 height: 100vh;
                 background-color: var(--primary);
@@ -677,7 +677,7 @@
             }
             
             nav.active {
-                left: 0;
+                left: -100% !important; /* Ensure nav.active is also permanently hidden */
             }
             
             nav ul {
@@ -696,12 +696,12 @@
                 width: 100%;
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
-                display: none;
+                display: none !important; /* Force hide overlay */
                 z-index: 1000;
             }
             
-            .overlay.active {
-                display: block;
+            .overlay.active { /* Ensure overlay.active is also permanently hidden */
+                display: none !important;
             }
         }
     </style>
