@@ -204,7 +204,7 @@
         }
         
         .feature-content {
-            padding: 1.5rem;
+            padding: 1rem;
         }
         
         .feature-content h3 {
@@ -258,7 +258,7 @@
         .tool-card {
             background-color: var(--light);
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s;
         }
@@ -336,7 +336,7 @@
         }
         
         .price-body {
-            padding: 2rem;
+            padding: 1.5rem;
         }
         
         .price-features {
@@ -533,6 +533,95 @@
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
+
+        /* Styles for Analyse Section */
+        #analysis .container > div { /* Target direct children divs of analysis container */
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        #analysis .container > div:nth-child(odd) {
+             /* background-color: var(--light); /* Alternate background for visual separation if desired */
+        }
+
+        #analysis label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        #analysis input[type="number"] {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            width: calc(100% - 150px); /* Adjust based on button width */
+            max-width: 200px; /* Max width for ID inputs */
+        }
+        
+        #analysis button.btn-primary { /* Specific to analyse buttons if different from global */
+            background-color: var(--primary);
+            color: var(--secondary);
+            /* padding: 0.6rem 1rem; Ensure consistent padding with input */
+        }
+        #analysis button.btn-primary:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+
+        #userTeamSquad ul,
+        #suggestionsContent ul,
+        #comparisonResults ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 1rem;
+        }
+
+        #userTeamSquad li,
+        #suggestionsContent li,
+        #comparisonResults li,
+        #suggestionsContent > div > p, /* For direct p in suggestions if not in li */
+        #comparisonResults > h4 + p, /* For direct p after h4 in comparison */
+        #comparisonResults > h5 + p,
+        #comparisonResults > p {
+            background-color: var(--light); /* Light background for list items/suggestions */
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        
+        #userTeamSquad li strong,
+        #suggestionsContent li strong,
+        #comparisonResults li strong,
+        #suggestionsContent > div > p strong,
+        #comparisonResults p strong {
+            color: var(--primary);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-weight: bold;
+            padding: 0.75rem;
+            border: 1px solid var(--danger);
+            border-radius: 4px;
+            background-color: #ffe0e0; /* Lighter red background */
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #loadingIndicator, #rivalLoadingIndicator {
+            color: var(--primary);
+            font-style: italic;
+            margin-left: 1rem;
+        }
         
         /* Responsive Styles */
         @media (max-width: 768px) {
@@ -578,7 +667,7 @@
             nav {
                 position: fixed;
                 top: 0;
-                left: -100%;
+                left: -100% !important; /* Force hide nav panel */
                 width: 70%;
                 height: 100vh;
                 background-color: var(--primary);
@@ -588,7 +677,7 @@
             }
             
             nav.active {
-                left: 0;
+                left: -100% !important; /* Ensure nav.active is also permanently hidden */
             }
             
             nav ul {
@@ -607,12 +696,12 @@
                 width: 100%;
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
-                display: none;
+                display: none !important; /* Force hide overlay */
                 z-index: 1000;
             }
             
-            .overlay.active {
-                display: block;
+            .overlay.active { /* Ensure overlay.active is also permanently hidden */
+                display: none !important;
             }
         }
     </style>
@@ -623,13 +712,12 @@
             <div class="logo">
                 FPL <span>Optimised</span>
             </div>
-            <button class="mobile-menu-btn">☰</button>
             <nav>
                 <ul>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#predictions">Predictions</a></li>
                     <li><a href="#live-tools">Live Tools</a></li>
-                    <li><a href="#analysis">Analysis</a></li>
+                    <li><a href="#analysis">Analyse</a></li>
                     <li><a href="#pricing">Pricing</a></li>
                 </ul>
             </nav>
@@ -829,37 +917,46 @@
     </section>
     
     <section class="dashboard-demo" id="analysis">
-        <div class="container">
+        <div class="container"> <!-- Use existing container class for consistent styling -->
             <div class="section-title">
-                <h2>Strategy & Retrospective Analysis</h2>
-                <p>Learn from past performances and elite managers</p>
+                <h2>Analyse Your FPL Team</h2>
+                <p>Enter your FPL Team ID to get optimisation suggestions and compare with rivals.</p>
             </div>
-            
-            <div class="demo-tabs">
-                <div class="demo-tab active">Season Review</div>
-                <div class="demo-tab">Elite Manager Data</div>
-                <div class="demo-tab">HiveMind Projections</div>
+
+            <!-- Team Input Area -->
+            <div id="team-input-area" style="margin-bottom: 2rem; padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <label for="teamIdInput">Your FPL Team ID:</label>
+                <input type="number" id="teamIdInput" name="teamId" placeholder="Enter your Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <button id="fetchTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Analyse Team</button>
+                <span id="loadingIndicator" style="margin-left: 1rem; display: none;">Loading...</span>
             </div>
-            
-            <div class="demo-content">
-                <img src="/api/placeholder/1000/600" alt="Season Review Dashboard" class="demo-screen">
-                <div style="margin-top: 2rem;">
-                    <h3>Comprehensive Season Review Tool</h3>
-                    <p>Analyze every decision you've made throughout the season and identify areas for improvement with our detailed performance analytics.</p>
-                    <div style="display: flex; flex-wrap: wrap; margin-top: 1.5rem;">
-                        <div style="flex: 1; min-width: 200px; margin-right: 1rem; margin-bottom: 1rem;">
-                            <h4>Transfer Analysis</h4>
-                            <p>See the points impact of every transfer you made and compare with optimal choices.</p>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; margin-right: 1rem; margin-bottom: 1rem;">
-                            <h4>Captaincy Review</h4>
-                            <p>Track your captain selection success rate and points left on the table.</p>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; margin-bottom: 1rem;">
-                            <h4>Chip Strategy Evaluation</h4>
-                            <p>Evaluate your chip usage timing and impact compared to optimal strategies.</p>
-                        </div>
-                    </div>
+
+            <!-- User Team Display Area -->
+            <div id="userTeamDisplay" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <h3>Your Current Team</h3>
+                <div id="userTeamSquad">
+                    <!-- User's squad will be displayed here by JavaScript -->
+                </div>
+                <p>Total Expected Points (Next GW): <span id="userTeamEpNext">N/A</span></p>
+            </div>
+
+            <!-- Optimisation Suggestions Area -->
+            <div id="optimisationSuggestions" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <h3>Optimisation Suggestions</h3>
+                <div id="suggestionsContent">
+                    <!-- Transfer suggestions will be displayed here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Rival Comparison Area -->
+            <div id="rival-comparison-area" style="padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3>Compare with Rival</h3>
+                <label for="rivalTeamIdInput">Rival's FPL Team ID:</label>
+                <input type="number" id="rivalTeamIdInput" name="rivalTeamId" placeholder="Enter Rival's Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <button id="compareTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Compare</button>
+                <span id="rivalLoadingIndicator" style="margin-left: 1rem; display: none;">Loading rival...</span>
+                <div id="comparisonResults" style="margin-top: 1rem;">
+                    <!-- Comparison results will be displayed here by JavaScript -->
                 </div>
             </div>
         </div>
@@ -880,3 +977,174 @@
                     <h3>Fixture Difficulty Rating (FDR) Charts</h3>
                     <p>Visualize the ease or difficulty of upcoming fixtures for all Premier League teams with our color-coded charts.</p>
                     <ul class="feature-list" style="margin-top: 1rem;">
+                        <li>Customizable FDR Parameters</li>
+                        <li>Home & Away Difficulty Breakdown</li>
+                        <li>Rotation Pair Analysis</li>
+                        <li>Long-Term Fixture Planning</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary">Explore FDR Charts</a>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem;">
+                <h3>Season Ticker & Planner</h3>
+                <p>Comprehensive view of all upcoming matches, filterable by team and gameweek range.</p>
+                <img src="/api/placeholder/1000/300" alt="Season Ticker" style="width: 100%; max-width: 800px; margin-top: 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            </div>
+        </div>
+    </section>
+    
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-title">
+                <h2>Choose Your Plan</h2>
+                <p>Unlock the full potential of FPL Optimised with our flexible subscription plans.</p>
+            </div>
+            
+            <div class="price-grid">
+                <div class="price-card">
+                    <div class="price-header">
+                        <h3>Free Tier</h3>
+                        <div class="price">£0 <span>/ month</span></div>
+                    </div>
+                    <div class="price-body">
+                        <p>Basic access to core tools.</p>
+                        <ul class="price-features">
+                            <li>Limited Player Projections</li>
+                            <li>Basic Fixture Analysis</li>
+                            <li>Team ID Input (Your Team Only)</li>
+                            <li>No Ad-Free Experience</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary); width: 100%; text-align: center;">Get Started Free</a>
+                    </div>
+                </div>
+                
+                <div class="price-card popular">
+                    <div class="popular">Most Popular</div>
+                    <div class="price-header">
+                        <h3>Premium</h3>
+                        <div class="price">£4.99 <span>/ month</span></div>
+                    </div>
+                    <div class="price-body">
+                        <p>Full access to all features & tools.</p>
+                        <ul class="price-features">
+                            <li>Advanced Player Projections</li>
+                            <li>Multi-Gameweek Transfer Solver</li>
+                            <li>Captaincy & Team Optimization</li>
+                            <li>Live Rank & Bonus Points</li>
+                            <li>Rival Comparison</li>
+                            <li>Ad-Free Experience</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary); width: 100%; text-align: center;">Go Premium</a>
+                    </div>
+                </div>
+                
+                <div class="price-card">
+                    <div class="price-header">
+                        <h3>Annual Saver</h3>
+                        <div class="price">£49.99 <span>/ year</span></div>
+                    </div>
+                    <div class="price-body">
+                        <p>Get 2 months free with annual billing.</p>
+                        <ul class="price-features">
+                            <li>All Premium Features</li>
+                            <li>Priority Support</li>
+                            <li>Early Access to New Tools</li>
+                            <li>Exclusive Community Access</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary); width: 100%; text-align: center;">Choose Annual</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>What Our Users Say</h2>
+            </div>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"FPL Optimised changed the game for me. The transfer solver is pure magic!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-img" style="background-image: url('/api/placeholder/50/50')"></div>
+                        <div class="author-info">
+                            <h4>ManagerX123</h4>
+                            <p>Top 10k Finish 2022/23</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"The live rank tracking is incredibly addictive and so much faster than the official site."</p>
+                    <div class="testimonial-author">
+                        <div class="author-img" style="background-image: url('/api/placeholder/50/50')"></div>
+                        <div class="author-info">
+                            <h4>FPL_Guruette</h4>
+                            <p>Consistent Top 50k Manager</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"I finally beat my mini-league rivals thanks to the detailed analysis and head-to-head comparison."</p>
+                    <div class="testimonial-author">
+                        <div class="author-img" style="background-image: url('/api/placeholder/50/50')"></div>
+                        <div class="author-info">
+                            <h4>RivalSlayer99</h4>
+                            <p>Mini-League Champion</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Elevate Your FPL Game?</h2>
+            <p>Join thousands of managers who are already using FPL Optimised to gain an edge. Sign up for your free trial today and start making smarter FPL decisions.</p>
+            <a href="#" class="btn btn-primary" style="font-size: 1.2rem; padding: 0.8rem 2rem;">Sign Up & Get Started</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>FPL Optimised</h3>
+                    <p>The ultimate toolkit for Fantasy Premier League managers seeking a competitive edge.</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Connect</h3>
+                    <p>Follow us on social media:</p>
+                    <div class="social-icons">
+                        <a href="#" title="Twitter"><img src="/api/placeholder/24/24" alt="Twitter"></a>
+                        <a href="#" title="Facebook"><img src="/api/placeholder/24/24" alt="Facebook"></a>
+                        <a href="#" title="Reddit"><img src="/api/placeholder/24/24" alt="Reddit"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2024 FPL Optimised. All rights reserved. FPL Optimised is not affiliated with the Premier League or the Fantasy Premier League.
+            </div>
+        </div>
+    </footer>
+    <script src="script.js" defer></script>
+</body>
+</html>
