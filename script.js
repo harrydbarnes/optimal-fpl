@@ -5,11 +5,29 @@ let allElementTypesData = []; // For storing player position/type data
 let currentGameweek = null;
 
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
-// const CORS_PROXY_URL = '/api/fplproxy?url='; 
+// const CORS_PROXY_URL = '/api/fplproxy?url=';
+
+// --- Team Planner Constants & Variables ---
+const MAX_PLAYERS = 15;
+const MAX_BUDGET = 1000; // Represents 100.0m
+// Adjusted to use singular_name_short from API for consistency
+const PLAYERS_PER_POSITION = { 'GKP': 2, 'DEF': 5, 'MID': 5, 'FWD': 3 };
+const MAX_PLAYERS_FROM_TEAM = 3;
+
+let currentSquad = [];
+let currentBudget = MAX_BUDGET;
 
 // --- DOM Element References ---
+// Analysis Section
 let teamIdInput, fetchTeamButton, loadingIndicator, userTeamSquad, userTeamEpNext, suggestionsContent;
-let rivalTeamIdInput, compareTeamButton, rivalLoadingIndicator, comparisonResults; // For rival comparison
+let rivalTeamIdInput, compareTeamButton, rivalLoadingIndicator, comparisonResults; 
+
+// Team Planner Section
+let positionFilter, playerListTbody, budgetRemainingEl, totalPlayersSelectedEl;
+let squadGoalkeepersUl, squadDefendersUl, squadMidfieldersUl, squadForwardsUl;
+let gkCountEl, defCountEl, midCountEl, fwdCountEl;
+let resetSquadButton;
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // User team analysis elements
@@ -26,6 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
     rivalLoadingIndicator = document.getElementById('rivalLoadingIndicator');
     comparisonResults = document.getElementById('comparisonResults');
 
+    // Team Planner elements
+    positionFilter = document.getElementById('position-filter');
+    playerListTbody = document.getElementById('player-list-tbody');
+    budgetRemainingEl = document.getElementById('budget-remaining');
+    totalPlayersSelectedEl = document.getElementById('total-players-selected');
+    squadGoalkeepersUl = document.getElementById('squad-goalkeepers');
+    squadDefendersUl = document.getElementById('squad-defenders');
+    squadMidfieldersUl = document.getElementById('squad-midfielders');
+    squadForwardsUl = document.getElementById('squad-forwards');
+    gkCountEl = document.getElementById('gk-count');
+    defCountEl = document.getElementById('def-count');
+    midCountEl = document.getElementById('mid-count');
+    fwdCountEl = document.getElementById('fwd-count');
+    resetSquadButton = document.getElementById('reset-squad-button');
+
     if (fetchTeamButton) {
         fetchTeamButton.addEventListener('click', handleAnalyseTeamClick);
     } else {
@@ -37,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error("Compare Team Button not found on page load.");
     }
+
+    // Team planner specific listeners are set up in initializeTeamPlanner after data is loaded
 });
 
 
@@ -93,6 +128,10 @@ async function initializeApp() {
             console.log(`Players loaded: ${allPlayersData.length}`);
             console.log(`Teams loaded: ${allTeamsData.length}`);
             console.log(`Element Types loaded: ${allElementTypesData.length}`);
+
+            // Initialize the team planner once data is ready
+            initializeTeamPlanner();
+
         } else {
             console.error("Bootstrap data is not in the expected format or is missing key parts.", bootstrapData);
             throw new Error("Invalid bootstrap data structure.");
@@ -101,6 +140,8 @@ async function initializeApp() {
     } catch (error) {
         console.error("Failed to initialize the application:", error);
         if(userTeamSquad) userTeamSquad.innerHTML = `<p class="error-message">Failed to load initial FPL data: ${error.message}. Please try refreshing.</p>`;
+        // Also inform planner users if data fails to load
+        if(playerListTbody) playerListTbody.innerHTML = `<tr><td colspan="7" class="error-message">Failed to load player data: ${error.message}. Please try refreshing.</td></tr>`;
     }
 }
 
@@ -413,6 +454,269 @@ function isPlayerAvailable(playerObject) {
     const isDoubtfulButMaybePlays = playerObject.status === 'd' && (playerObject.chance_of_playing_next_round === null || playerObject.chance_of_playing_next_round >= 50);
     return isAvailableStatus || isDoubtfulButMaybePlays;
 }
+
+
+// --- Team Planner Functions ---
+
+/**
+ * Maps FPL API element_type IDs to the short names used in the filter ('GKP', 'DEF', 'MID', 'FWD').
+ * And vice-versa. Also maps filter values ('All', 'GK', 'DEF', 'MID', 'FWD') to API element_type IDs or 'all'.
+ */
+const positionMap = {
+    // Mapping from element_type ID to singular_name_short (used internally)
+    1: 'GKP',
+    2: 'DEF',
+    3: 'MID',
+    4: 'FWD',
+    // Mapping from filter value to element_type ID (or 'all')
+    'all': 'all', // Special case for filter
+    'GK': 1,  // User-friendly filter value 'GK' maps to 'GKP' (element_type 1)
+    'DEF': 2,
+    'MID': 3,
+    'FWD': 4,
+    // Mapping from singular_name_short to element_type ID (for convenience)
+    'GKP': 1,
+    'DEFF': 2, // Typo, should be DEF
+    'MIDD': 3, // Typo, should be MID
+    'FWDD': 4  // Typo, should be FWD
+};
+
+// Correcting typos in positionMap
+positionMap['DEF'] = 2;
+positionMap['MID'] = 3;
+positionMap['FWD'] = 4;
+
+
+/**
+ * Initializes the team planner section.
+ * Sets up event listeners and populates the initial player table.
+ */
+function initializeTeamPlanner() {
+    if (!allPlayersData.length || !allElementTypesData.length || !allTeamsData.length) {
+        console.error("Team planner cannot initialize: FPL data not fully loaded.");
+        if (playerListTbody) playerListTbody.innerHTML = `<tr><td colspan="7" class="error-message">Player data could not be loaded for the planner. Try refreshing.</td></tr>`;
+        return;
+    }
+
+    if (positionFilter) {
+        positionFilter.addEventListener('change', populatePlayerTable);
+    } else {
+        console.error("Position filter element not found for planner.");
+    }
+
+    if (resetSquadButton) {
+        resetSquadButton.addEventListener('click', resetSquad);
+    } else {
+        console.error("Reset squad button not found for planner.");
+    }
+    
+    populatePlayerTable(); // Initial population
+    updateSquadDisplay();  // Initial UI update for budget, counts etc.
+    console.log("Team Planner Initialized.");
+}
+
+/**
+ * Populates the player list table based on selected filters.
+ */
+function populatePlayerTable() {
+    if (!playerListTbody || !allPlayersData.length || !allElementTypesData.length || !allTeamsData.length) {
+        console.error("Cannot populate player table: missing elements or data.");
+        if (playerListTbody) playerListTbody.innerHTML = '<tr><td colspan="7">Error loading player data.</td></tr>';
+        return;
+    }
+    playerListTbody.innerHTML = ''; // Clear existing rows
+
+    const selectedFilterValue = positionFilter ? positionFilter.value : 'all'; // e.g., 'GK', 'DEF', 'all'
+    
+    let filteredPlayers = allPlayersData;
+
+    if (selectedFilterValue !== 'all') {
+        const targetElementTypeId = positionMap[selectedFilterValue]; // Get the numeric ID (1, 2, 3, 4)
+        if (targetElementTypeId) {
+            filteredPlayers = allPlayersData.filter(player => player.element_type === targetElementTypeId);
+        } else {
+            console.warn(`Unknown position filter value: ${selectedFilterValue}`);
+        }
+    }
+
+    // Further sort by total_points (desc) as a default sorting for the table
+    filteredPlayers.sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
+
+
+    filteredPlayers.forEach(player => {
+        const team = allTeamsData.find(t => t.id === player.team);
+        const teamShortName = team ? team.short_name : 'N/A';
+        
+        // Get the API's short name for position (GKP, DEF, MID, FWD)
+        const positionApiShortName = positionMap[player.element_type]; 
+
+        const price = (player.now_cost / 10).toFixed(1);
+        const totalPointsLastSeason = player.total_points || 0;
+        const recentPoints = player.form || '0'; // Use form for "Recent Pts*"
+
+        const row = playerListTbody.insertRow();
+        row.innerHTML = `
+            <td>${player.web_name}</td>
+            <td>${teamShortName}</td>
+            <td>${positionApiShortName}</td> 
+            <td>${price}</td>
+            <td>${totalPointsLastSeason}</td>
+            <td>${recentPoints}</td>
+            <td><button class="player-add-button" data-player-id="${player.id}">Add</button></td>
+        `;
+        const addButton = row.querySelector('.player-add-button');
+        if (addButton) {
+            addButton.addEventListener('click', () => addPlayerToSquad(player.id));
+            // Disable button if player is already in squad
+            if (currentSquad.find(p => p.id === player.id)) {
+                addButton.disabled = true;
+                addButton.textContent = 'Added';
+            }
+        }
+    });
+    if(filteredPlayers.length === 0 && playerListTbody){
+        playerListTbody.innerHTML = `<tr><td colspan="7">No players found for position: ${selectedFilterValue}.</td></tr>`;
+    }
+}
+
+/**
+ * Updates the squad display (budget, player counts, lists).
+ */
+function updateSquadDisplay() {
+    if (budgetRemainingEl) {
+        budgetRemainingEl.textContent = (currentBudget / 10).toFixed(1);
+    }
+    if (totalPlayersSelectedEl) {
+        totalPlayersSelectedEl.textContent = currentSquad.length;
+    }
+
+    // Clear current lists
+    if(squadGoalkeepersUl) squadGoalkeepersUl.innerHTML = '';
+    if(squadDefendersUl) squadDefendersUl.innerHTML = '';
+    if(squadMidfieldersUl) squadMidfieldersUl.innerHTML = '';
+    if(squadForwardsUl) squadForwardsUl.innerHTML = '';
+
+    const positionCounts = { 'GKP': 0, 'DEF': 0, 'MID': 0, 'FWD': 0 };
+
+    currentSquad.forEach(player => {
+        const playerDetails = getPlayerDetailsById(player.id); // Ensure we use the full player object from allPlayersData
+        if (!playerDetails) return;
+
+        const positionApiShortName = positionMap[playerDetails.element_type]; // 'GKP', 'DEF', etc.
+        positionCounts[positionApiShortName]++;
+
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            <span class="player-name">${playerDetails.web_name}</span> 
+            (<span class="player-price">£${(playerDetails.now_cost / 10).toFixed(1)}m</span>)
+            <button class="remove-player-btn" data-player-id="${playerDetails.id}">X</button>
+        `;
+        
+        const removeButton = listItem.querySelector('.remove-player-btn');
+        if (removeButton) {
+            removeButton.addEventListener('click', () => removePlayerFromSquad(playerDetails.id));
+        }
+
+        switch (positionApiShortName) {
+            case 'GKP': squadGoalkeepersUl.appendChild(listItem); break;
+            case 'DEF': squadDefendersUl.appendChild(listItem); break;
+            case 'MID': squadMidfieldersUl.appendChild(listItem); break;
+            case 'FWD': squadForwardsUl.appendChild(listItem); break;
+        }
+    });
+
+    if (gkCountEl) gkCountEl.textContent = positionCounts['GKP'];
+    if (defCountEl) defCountEl.textContent = positionCounts['DEF'];
+    if (midCountEl) midCountEl.textContent = positionCounts['MID'];
+    if (fwdCountEl) fwdCountEl.textContent = positionCounts['FWD'];
+
+    // Refresh player table to update "Add" button states
+    // This is important if a player is removed, their "Add" button should be re-enabled.
+    populatePlayerTable();
+}
+
+/**
+ * Adds a player to the current squad if validation checks pass.
+ * @param {number} playerId The ID of the player to add.
+ */
+function addPlayerToSquad(playerId) {
+    const player = getPlayerDetailsById(playerId);
+    if (!player) {
+        console.error(`Player with ID ${playerId} not found.`);
+        return;
+    }
+
+    // --- Validations ---
+    // 1. Squad full
+    if (currentSquad.length >= MAX_PLAYERS) {
+        alert("Squad is full (15 players max).");
+        return;
+    }
+    // 2. Budget
+    if (currentBudget < player.now_cost) {
+        alert(`Not enough budget. Remaining: £${(currentBudget / 10).toFixed(1)}m, Player cost: £${(player.now_cost / 10).toFixed(1)}m`);
+        return;
+    }
+    // 3. Player already in squad
+    if (currentSquad.find(p => p.id === playerId)) {
+        alert(`${player.web_name} is already in your squad.`);
+        return;
+    }
+
+    const playerPositionApiShortName = positionMap[player.element_type]; // 'GKP', 'DEF', etc.
+    
+    // 4. Max players for this position
+    const playersInPosition = currentSquad.filter(p => p.element_type === player.element_type);
+    if (playersInPosition.length >= PLAYERS_PER_POSITION[playerPositionApiShortName]) {
+        alert(`Max players for position ${playerPositionApiShortName} (${PLAYERS_PER_POSITION[playerPositionApiShortName]}) reached.`);
+        return;
+    }
+
+    // 5. Max players from the same team
+    const playersFromSameTeam = currentSquad.filter(p => p.team === player.team);
+    if (playersFromSameTeam.length >= MAX_PLAYERS_FROM_TEAM) {
+        alert(`Max ${MAX_PLAYERS_FROM_TEAM} players from the same team (${allTeamsData.find(t => t.id === player.team)?.name || 'N/A'}).`);
+        return;
+    }
+
+    // --- Add player ---
+    currentSquad.push(player); // Store the full player object
+    currentBudget -= player.now_cost;
+    
+    console.log(`${player.web_name} added to squad. Budget remaining: ${(currentBudget / 10).toFixed(1)}m`);
+    updateSquadDisplay(); // This will also call populatePlayerTable to update button states
+}
+
+/**
+ * Removes a player from the current squad.
+ * @param {number} playerId The ID of the player to remove.
+ */
+function removePlayerFromSquad(playerId) {
+    const playerIndex = currentSquad.findIndex(p => p.id === playerId);
+    if (playerIndex > -1) {
+        const player = currentSquad[playerIndex];
+        currentBudget += player.now_cost;
+        currentSquad.splice(playerIndex, 1);
+        
+        console.log(`${player.web_name} removed from squad. Budget remaining: ${(currentBudget / 10).toFixed(1)}m`);
+        updateSquadDisplay(); // This will also call populatePlayerTable to re-enable the Add button
+    } else {
+        console.warn(`Player with ID ${playerId} not found in current squad for removal.`);
+    }
+}
+
+
+/**
+ * Resets the current squad to empty and full budget.
+ */
+function resetSquad() {
+    console.log("Resetting squad...");
+    currentSquad = [];
+    currentBudget = MAX_BUDGET;
+    updateSquadDisplay(); // This will call populatePlayerTable, which handles button states
+    console.log("Squad has been reset.");
+}
+
 
 // Call initializeApp when the script loads
 initializeApp();
