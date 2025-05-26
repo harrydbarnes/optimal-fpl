@@ -34,44 +34,45 @@ document.addEventListener('DOMContentLoaded', () => {
     teamIdInput = document.getElementById('teamIdInput');
     fetchTeamButton = document.getElementById('fetchTeamButton');
     loadingIndicator = document.getElementById('loadingIndicator');
+    // Analysis Section Elements
+    teamIdInput = document.getElementById('teamIdInput');
+    fetchTeamButton = document.getElementById('fetchTeamButton');
+    loadingIndicator = document.getElementById('loadingIndicator');
     userTeamSquad = document.getElementById('userTeamSquad');
     userTeamEpNext = document.getElementById('userTeamEpNext');
     suggestionsContent = document.getElementById('suggestionsContent');
-    
-    // Rival comparison elements
     rivalTeamIdInput = document.getElementById('rivalTeamIdInput');
     compareTeamButton = document.getElementById('compareTeamButton');
     rivalLoadingIndicator = document.getElementById('rivalLoadingIndicator');
     comparisonResults = document.getElementById('comparisonResults');
-
-    // Team Planner elements
+    
+    // Rival comparison elements
+    // Team Planner Section Elements
     positionFilter = document.getElementById('position-filter');
-    playerListTbody = document.getElementById('player-list-tbody');
-    budgetRemainingEl = document.getElementById('budget-remaining');
-    totalPlayersSelectedEl = document.getElementById('total-players-selected');
-    squadGoalkeepersUl = document.getElementById('squad-goalkeepers');
-    squadDefendersUl = document.getElementById('squad-defenders');
-    squadMidfieldersUl = document.getElementById('squad-midfielders');
-    squadForwardsUl = document.getElementById('squad-forwards');
-    gkCountEl = document.getElementById('gk-count');
-    defCountEl = document.getElementById('def-count');
-    midCountEl = document.getElementById('mid-count');
-    fwdCountEl = document.getElementById('fwd-count');
-    resetSquadButton = document.getElementById('reset-squad-button');
+    playerListTbody = document.getElementById('player-list-tbody'); // Used in initializeTeamPlanner, populatePlayerTable
+    budgetRemainingEl = document.getElementById('budget-remaining'); // Used in updateSquadDisplay
+    totalPlayersSelectedEl = document.getElementById('total-players-selected'); // Used in updateSquadDisplay
+    squadGoalkeepersUl = document.getElementById('squad-goalkeepers'); // Used in updateSquadDisplay
+    squadDefendersUl = document.getElementById('squad-defenders'); // Used in updateSquadDisplay
+    squadMidfieldersUl = document.getElementById('squad-midfielders'); // Used in updateSquadDisplay
+    squadForwardsUl = document.getElementById('squad-forwards'); // Used in updateSquadDisplay
+    gkCountEl = document.getElementById('gk-count'); // Used in updateSquadDisplay
+    defCountEl = document.getElementById('def-count'); // Used in updateSquadDisplay
+    midCountEl = document.getElementById('mid-count'); // Used in updateSquadDisplay
+    fwdCountEl = document.getElementById('fwd-count'); // Used in updateSquadDisplay
+    resetSquadButton = document.getElementById('reset-squad-button'); // Used in initializeTeamPlanner
 
+    // Event listeners for Analysis page
     if (fetchTeamButton) {
         fetchTeamButton.addEventListener('click', handleAnalyseTeamClick);
-    } else {
-        console.error("Fetch Team Button not found on page load.");
     }
-
     if (compareTeamButton) {
         compareTeamButton.addEventListener('click', handleCompareTeamClick);
-    } else {
-        console.error("Compare Team Button not found on page load.");
     }
 
-    // Team planner specific listeners are set up in initializeTeamPlanner after data is loaded
+    // Team planner specific listeners are primarily set up in initializeTeamPlanner,
+    // which is called after data loading in initializeApp.
+    // No direct listeners here unless they don't depend on fetched data.
 });
 
 
@@ -130,6 +131,7 @@ async function initializeApp() {
             console.log(`Element Types loaded: ${allElementTypesData.length}`);
 
             // Initialize the team planner once data is ready
+            // This function itself should be robust if planner elements are not on the page
             initializeTeamPlanner();
 
         } else {
@@ -139,9 +141,14 @@ async function initializeApp() {
         
     } catch (error) {
         console.error("Failed to initialize the application:", error);
-        if(userTeamSquad) userTeamSquad.innerHTML = `<p class="error-message">Failed to load initial FPL data: ${error.message}. Please try refreshing.</p>`;
-        // Also inform planner users if data fails to load
-        if(playerListTbody) playerListTbody.innerHTML = `<tr><td colspan="7" class="error-message">Failed to load player data: ${error.message}. Please try refreshing.</td></tr>`;
+        // Display error on Analysis page elements if they exist
+        if (userTeamSquad) {
+            userTeamSquad.innerHTML = `<p class="error-message">Failed to load initial FPL data: ${error.message}. Please try refreshing.</p>`;
+        }
+        // Display error on Planner page elements if they exist
+        if (playerListTbody) {
+            playerListTbody.innerHTML = `<tr><td colspan="7" class="error-message">Failed to load player data: ${error.message}. Please try refreshing.</td></tr>`;
+        }
     }
 }
 
@@ -149,6 +156,11 @@ async function initializeApp() {
  * Handles the click event for the "Analyse Team" button.
  */
 async function handleAnalyseTeamClick() {
+    if (!teamIdInput || !fetchTeamButton || !loadingIndicator || !userTeamSquad || !userTeamEpNext || !suggestionsContent) {
+        console.error("One or more analysis DOM elements are missing for handleAnalyseTeamClick.");
+        return;
+    }
+
     const teamID = teamIdInput.value.trim();
 
     if (!teamID) {
@@ -170,8 +182,8 @@ async function handleAnalyseTeamClick() {
     try {
         const teamData = await fetchUserTeam(teamID, currentGameweek);
         if (teamData && teamData.picks) {
-            displayUserTeam(teamData.picks);
-            displayBasicOptimisation(teamData.picks);
+            displayUserTeam(teamData.picks); // This function also needs to be robust
+            displayBasicOptimisation(teamData.picks); // This function also needs to be robust
         } else {
             if (!teamData && userTeamSquad.innerHTML === '') { 
                  userTeamSquad.innerHTML = `<p class="error-message">Could not retrieve team data. Team ID might be invalid or private for the gameweek.</p>`;
@@ -183,9 +195,13 @@ async function handleAnalyseTeamClick() {
         }
         console.error("Error in handleAnalyseTeamClick:", error);
     } finally {
-        loadingIndicator.style.display = 'none';
-        loadingIndicator.textContent = 'Loading...'; // Reset text
-        fetchTeamButton.disabled = false;
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+            loadingIndicator.textContent = 'Loading...'; // Reset text
+        }
+        if (fetchTeamButton) {
+            fetchTeamButton.disabled = false;
+        }
     }
 }
 
@@ -208,9 +224,9 @@ async function fetchUserTeam(teamID, gameweekID) {
             }
             
             // Display error in relevant area (user or rival) based on which loading indicator is visible
-            if (loadingIndicator.style.display === 'inline') { 
+            if (loadingIndicator && loadingIndicator.style.display === 'inline' && userTeamSquad) {
                  userTeamSquad.innerHTML = `<p class="error-message">${message}</p>`;
-            } else if (rivalLoadingIndicator.style.display === 'inline') { 
+            } else if (rivalLoadingIndicator && rivalLoadingIndicator.style.display === 'inline' && comparisonResults) {
                  comparisonResults.innerHTML = `<p class="error-message">${message}</p>`;
             }
             
@@ -222,9 +238,9 @@ async function fetchUserTeam(teamID, gameweekID) {
     } catch (error) {
         console.error(`Error fetching user team data for ID ${teamID}:`, error);
         // Generic message if not set by HTTP error, specific to context
-        if (loadingIndicator.style.display === 'inline' && userTeamSquad.innerHTML === '') {
+        if (loadingIndicator && loadingIndicator.style.display === 'inline' && userTeamSquad && userTeamSquad.innerHTML === '') {
             userTeamSquad.innerHTML = `<p class="error-message">Failed to fetch team data for Team ID ${teamID}: ${error.message}. Check ID and network.</p>`;
-        } else if (rivalLoadingIndicator.style.display === 'inline' && comparisonResults.innerHTML === '') {
+        } else if (rivalLoadingIndicator && rivalLoadingIndicator.style.display === 'inline' && comparisonResults && comparisonResults.innerHTML === '') {
             comparisonResults.innerHTML = `<p class="error-message">Failed to fetch data for one of the teams (ID: ${teamID}): ${error.message}. Check ID and network.</p>`;
         }
         return null;
@@ -236,6 +252,10 @@ async function fetchUserTeam(teamID, gameweekID) {
  * @param {Array} teamPicks Array of player picks from fetchUserTeam.
  */
 function displayUserTeam(teamPicks) {
+    if (!userTeamSquad || !userTeamEpNext) {
+        console.error("Missing DOM elements for displayUserTeam.");
+        return;
+    }
     userTeamSquad.innerHTML = ''; 
     let totalEpNext = 0;
 
@@ -282,6 +302,10 @@ function displayUserTeam(teamPicks) {
  * @param {Array} currentPicks Array of player picks from the user's current team.
  */
 function displayBasicOptimisation(currentPicks) {
+    if (!suggestionsContent) {
+        console.error("Missing DOM element for displayBasicOptimisation.");
+        return;
+    }
     suggestionsContent.innerHTML = ''; 
 
     if (!allPlayersData.length) {
@@ -323,6 +347,11 @@ function displayBasicOptimisation(currentPicks) {
  * Handles the click event for the "Compare" button.
  */
 async function handleCompareTeamClick() {
+    if (!teamIdInput || !rivalTeamIdInput || !compareTeamButton || !rivalLoadingIndicator || !comparisonResults) {
+        console.error("One or more comparison DOM elements are missing for handleCompareTeamClick.");
+        return;
+    }
+
     const userTeamID = teamIdInput.value.trim();
     const rivalTeamID = rivalTeamIdInput.value.trim();
 
@@ -351,7 +380,7 @@ async function handleCompareTeamClick() {
         ]);
 
         if (userTeamData && userTeamData.picks && rivalTeamData && rivalTeamData.picks) {
-            generateComparisonSuggestions(userTeamData.picks, rivalTeamData.picks);
+            generateComparisonSuggestions(userTeamData.picks, rivalTeamData.picks); // This function also needs to be robust
         } else {
             if (comparisonResults.innerHTML === '') { 
                  comparisonResults.innerHTML = `<p class="error-message">Could not retrieve data for one or both teams. Please check IDs and try again.</p>`;
@@ -363,9 +392,13 @@ async function handleCompareTeamClick() {
             comparisonResults.innerHTML = `<p class="error-message">An error occurred while comparing teams: ${error.message}.</p>`;
         }
     } finally {
-        rivalLoadingIndicator.style.display = 'none';
-        rivalLoadingIndicator.textContent = 'Loading rival...'; 
-        compareTeamButton.disabled = false;
+        if(rivalLoadingIndicator) {
+            rivalLoadingIndicator.style.display = 'none';
+            rivalLoadingIndicator.textContent = 'Loading rival...'; 
+        }
+        if(compareTeamButton) {
+            compareTeamButton.disabled = false;
+        }
     }
 }
 
@@ -375,6 +408,10 @@ async function handleCompareTeamClick() {
  * @param {Array} rivalPicks Array of rival's player picks.
  */
 function generateComparisonSuggestions(userPicks, rivalPicks) {
+    if (!comparisonResults) {
+        console.error("Missing DOM element for generateComparisonSuggestions.");
+        return;
+    }
     comparisonResults.innerHTML = ''; 
 
     const userPlayerIds = new Set(userPicks.map(p => p.element));
@@ -633,7 +670,9 @@ function updateSquadDisplay() {
 
     // Refresh player table to update "Add" button states
     // This is important if a player is removed, their "Add" button should be re-enabled.
-    populatePlayerTable();
+    if (playerListTbody && positionFilter) { // Only call if planner elements are likely there
+        populatePlayerTable();
+    }
 }
 
 /**
