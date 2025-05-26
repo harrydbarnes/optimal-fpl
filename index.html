@@ -704,6 +704,198 @@
                 display: none !important;
             }
         }
+
+        /* Styles for 25/26 Team Planner Section */
+        #team-planner-section .planner-content {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping for smaller screens if necessary */
+            gap: 2rem; /* Space between player selection and squad summary */
+            background-color: white; /* White background for the content area */
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-selection-area {
+            flex: 3; /* Takes up more space, e.g., ~60-65% */
+            min-width: 300px; /* Minimum width before wrapping */
+        }
+
+        .squad-summary-area {
+            flex: 2; /* Takes up less space, e.g., ~35-40% */
+            min-width: 250px; /* Minimum width */
+            background-color: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .player-selection-area h3, .squad-summary-area h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .squad-summary-area h4 {
+            color: var(--primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+
+        .filters-sort {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filters-sort label {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .filters-sort select {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .player-list-table-container {
+            max-height: 500px; /* Max height before scrolling */
+            overflow-y: auto;  /* Enable vertical scrollbar if content exceeds max-height */
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        #player-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #player-list-table th, #player-list-table td {
+            border-bottom: 1px solid #ddd; /* Light border for rows */
+            padding: 0.75rem; /* Increased padding */
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        #player-list-table th {
+            background-color: var(--light);
+            color: var(--primary);
+            font-weight: 600; /* Bolder headers */
+            position: sticky; /* Make headers stick during scroll */
+            top: 0;
+            z-index: 10;
+        }
+        
+        #player-list-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #player-list-table tbody tr:hover {
+            background-color: #f1f1f1; /* Hover effect for rows */
+        }
+
+        .player-add-button {
+            padding: 0.4rem 0.8rem;
+            background-color: var(--secondary);
+            color: var(--primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .player-add-button:hover {
+            background-color: #00cc6a; /* Darker shade on hover */
+        }
+        
+        .player-add-button:disabled {
+            background-color: var(--gray);
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .budget-info, .squad-composition-info {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .budget-info span, .squad-composition-info span {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .squad-position-list {
+            list-style-type: none; /* Remove default bullet points */
+            padding-left: 0;
+            margin-bottom: 1.5rem; /* Space below each list */
+        }
+
+        .squad-position-list li {
+            background-color: white;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .squad-position-list li .player-name {
+            font-weight: 500;
+        }
+        .squad-position-list li .player-price {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .remove-player-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .remove-player-btn:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+        
+        #reset-squad-button.btn-danger { /* Ensure it picks up danger color */
+            background-color: var(--danger);
+            color: white;
+        }
+        #reset-squad-button.btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Responsive adjustments for planner */
+        @media (max-width: 992px) { /* Adjust breakpoint as needed */
+            #team-planner-section .planner-content {
+                flex-direction: column; /* Stack columns on smaller screens */
+            }
+            .player-selection-area, .squad-summary-area {
+                flex: none; /* Reset flex basis */
+                width: 100%; /* Full width for stacked columns */
+            }
+            .player-list-table-container {
+                 max-height: 400px; /* Adjust height for smaller screens */
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -718,6 +910,7 @@
                     <li><a href="#predictions">Predictions</a></li>
                     <li><a href="#live-tools">Live Tools</a></li>
                     <li><a href="#analysis">Analyse</a></li>
+                    <li><a href="#team-planner-section">25/26 Planner</a></li>
                     <li><a href="#pricing">Pricing</a></li>
                 </ul>
             </nav>
@@ -961,6 +1154,88 @@
             </div>
         </div>
     </section>
+
+    <section class="dashboard-demo" id="team-planner-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>25/26 Planner</h2>
+                <p>Plan your dream squad for the next Fantasy Premier League season.</p>
+            </div>
+
+            <!-- Main content area for the planner -->
+            <div class="planner-content">
+
+                <!-- Left side: Player selection table and filters -->
+                <div class="player-selection-area">
+                    <h3>Available Players</h3>
+                    <div class="filters-sort">
+                        <!-- Position Filter -->
+                        <label for="position-filter">Position:</label>
+                        <select id="position-filter">
+                            <option value="all">All</option>
+                            <option value="GK">Goalkeepers (GK)</option>
+                            <option value="DEF">Defenders (DEF)</option>
+                            <option value="MID">Midfielders (MID)</option>
+                            <option value="FWD">Forwards (FWD)</option>
+                        </select>
+                        <!-- Sorting (to be implemented later if needed via JS) -->
+                    </div>
+                    <div class="player-list-table-container">
+                        <table id="player-list-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Team</th>
+                                    <th>Pos.</th>
+                                    <th>Price (£m)</th>
+                                    <th>Total Pts (LS)</th>
+                                    <th>Recent Pts*</th>
+                                    <th>Add</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-list-tbody">
+                                <!-- Player rows will be dynamically inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                        <p><small>*Recent Pts refers to form or last few gameweeks' average if available.</small></p>
+                    </div>
+                </div>
+
+                <!-- Right side: Squad display and budget information -->
+                <div class="squad-summary-area">
+                    <h3>Your Squad</h3>
+                    <div class="budget-info">
+                        <span>Budget: £</span><span id="budget-remaining">100.0</span>m
+                    </div>
+                    <div class="squad-composition-info">
+                        <span>Players: </span><span id="total-players-selected">0</span>/15
+                    </div>
+
+                    <!-- Squad display separated by positions -->
+                    <h4>Goalkeepers (<span id="gk-count">0</span>/2)</h4>
+                    <ul id="squad-goalkeepers" class="squad-position-list">
+                        <!-- Selected GKs will be listed here -->
+                    </ul>
+
+                    <h4>Defenders (<span id="def-count">0</span>/5)</h4>
+                    <ul id="squad-defenders" class="squad-position-list">
+                        <!-- Selected DEFs will be listed here -->
+                    </ul>
+
+                    <h4>Midfielders (<span id="mid-count">0</span>/5)</h4>
+                    <ul id="squad-midfielders" class="squad-position-list">
+                        <!-- Selected MIDs will be listed here -->
+                    </ul>
+
+                    <h4>Forwards (<span id="fwd-count">0</span>/3)</h4>
+                    <ul id="squad-forwards" class="squad-position-list">
+                        <!-- Selected FWDs will be listed here -->
+                    </ul>
+                    <button id="reset-squad-button" class="btn btn-danger" style="margin-top: 1rem;">Reset Squad</button>
+                </div>
+            </div>
+        </div>
+    </section>
     
     <section class="features" id="fixture-analysis">
         <div class="container">
@@ -1016,26 +1291,6 @@
                             <li>No Ad-Free Experience</li>
                         </ul>
                         <a href="#" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary); width: 100%; text-align: center;">Get Started Free</a>
-                    </div>
-                </div>
-                
-                <div class="price-card popular">
-                    <div class="popular">Most Popular</div>
-                    <div class="price-header">
-                        <h3>Premium</h3>
-                        <div class="price">£4.99 <span>/ month</span></div>
-                    </div>
-                    <div class="price-body">
-                        <p>Full access to all features & tools.</p>
-                        <ul class="price-features">
-                            <li>Advanced Player Projections</li>
-                            <li>Multi-Gameweek Transfer Solver</li>
-                            <li>Captaincy & Team Optimization</li>
-                            <li>Live Rank & Bonus Points</li>
-                            <li>Rival Comparison</li>
-                            <li>Ad-Free Experience</li>
-                        </ul>
-                        <a href="#" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary); width: 100%; text-align: center;">Go Premium</a>
                     </div>
                 </div>
                 
