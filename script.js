@@ -5,7 +5,7 @@ let allElementTypesData = []; // For storing player position/type data
 let currentGameweek = null;
 
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
-// const CORS_PROXY_URL = '/api/fplproxy?url=';
+const CORS_PROXY_URL = '/api/fplproxy?url=';
 
 // --- Team Planner Constants & Variables ---
 const MAX_PLAYERS = 15;
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {Promise<Object>} The parsed JSON data from the API.
  */
 async function fetchBootstrapData() {
-    const apiUrl = FPL_BOOTSTRAP_URL; // Reverted to direct API call
+    const apiUrl = CORS_PROXY_URL + encodeURIComponent(FPL_BOOTSTRAP_URL);
     console.log(`Fetching FPL bootstrap data from: ${apiUrl}`); // Updated console log
     try {
         const response = await fetch(apiUrl);
@@ -196,7 +196,8 @@ async function handleAnalyseTeamClick() {
  * @returns {Promise<Object|null>} The team picks data or null on error.
  */
 async function fetchUserTeam(teamID, gameweekID) {
-    const fetchUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`; // Reverted to direct API call
+    const baseApiUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`;
+    const fetchUrl = CORS_PROXY_URL + encodeURIComponent(baseApiUrl);
     console.log(`Fetching user team data from: ${fetchUrl}`); // Updated console log
     try {
         const response = await fetch(fetchUrl);

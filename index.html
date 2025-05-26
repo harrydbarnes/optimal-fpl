@@ -677,7 +677,7 @@
             }
             
             nav.active {
-                left: -100% !important; /* Ensure nav.active is also permanently hidden */
+                left: 0 !important; /* Show the nav panel when active */
             }
             
             nav ul {
@@ -700,8 +700,8 @@
                 z-index: 1000;
             }
             
-            .overlay.active { /* Ensure overlay.active is also permanently hidden */
-                display: none !important;
+            .overlay.active {
+                display: block !important; /* Show the overlay when active */
             }
         }
 
