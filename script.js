@@ -5,7 +5,7 @@ let allElementTypesData = []; // For storing player position/type data
 let currentGameweek = null;
 
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
-const CORS_PROXY_URL = '/api/fplproxy?url='; 
+// const CORS_PROXY_URL = '/api/fplproxy?url='; 
 
 // --- DOM Element References ---
 let teamIdInput, fetchTeamButton, loadingIndicator, userTeamSquad, userTeamEpNext, suggestionsContent;
@@ -45,9 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {Promise<Object>} The parsed JSON data from the API.
  */
 async function fetchBootstrapData() {
-    const originalApiUrl = FPL_BOOTSTRAP_URL;
-    const apiUrl = `${CORS_PROXY_URL}${encodeURIComponent(originalApiUrl)}`;
-    console.log(`Fetching FPL bootstrap data via proxy from: ${apiUrl}`);
+    const apiUrl = FPL_BOOTSTRAP_URL; // Reverted to direct API call
+    console.log(`Fetching FPL bootstrap data from: ${apiUrl}`); // Updated console log
     try {
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -156,15 +155,14 @@ async function handleAnalyseTeamClick() {
  * @returns {Promise<Object|null>} The team picks data or null on error.
  */
 async function fetchUserTeam(teamID, gameweekID) {
-    const originalFetchUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`;
-    const fetchUrl = `${CORS_PROXY_URL}${encodeURIComponent(originalFetchUrl)}`;
-    console.log(`Fetching user team data via proxy from: ${fetchUrl}`);
+    const fetchUrl = `https://fantasy.premierleague.com/api/entry/${teamID}/event/${gameweekID}/picks/`; // Reverted to direct API call
+    console.log(`Fetching user team data from: ${fetchUrl}`); // Updated console log
     try {
         const response = await fetch(fetchUrl);
         if (!response.ok) {
             let message = `Error fetching team data (Status: ${response.status} for ${fetchUrl}).`;
             if(response.status === 404){
-                 message = `Team ID ${teamID} not found or data is private for Gameweek ${gameweekID} (via proxy).`;
+                 message = `Team ID ${teamID} not found or data is private for Gameweek ${gameweekID}.`;
             }
             
             // Display error in relevant area (user or rival) based on which loading indicator is visible
