@@ -4,6 +4,9 @@ let allTeamsData = [];
 let allElementTypesData = []; // For storing player position/type data
 let currentGameweek = null;
 
+// New Dashboard Variables
+let leagueIdInput, myTeamIdInput, loadLeagueBtn, leagueTable, threatList, statsBody, statsSort;
+
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
 const CORS_PROXY_URL = '/api/fplproxy?url=';
 
@@ -45,6 +48,24 @@ document.addEventListener('DOMContentLoaded', () => {
     compareTeamButton = document.getElementById('compareTeamButton');
     rivalLoadingIndicator = document.getElementById('rivalLoadingIndicator');
     comparisonResults = document.getElementById('comparisonResults');
+
+    // New Dashboard Elements
+    leagueIdInput = document.getElementById('leagueIdInput');
+    myTeamIdInput = document.getElementById('myTeamIdInput');
+    loadLeagueBtn = document.getElementById('loadLeagueBtn');
+    if (document.getElementById('leagueTable')) {
+        leagueTable = document.getElementById('leagueTable').querySelector('tbody');
+    }
+    threatList = document.getElementById('threatList');
+    statsBody = document.getElementById('statsBody');
+    statsSort = document.getElementById('statsSort');
+
+    if (loadLeagueBtn) {
+        loadLeagueBtn.addEventListener('click', handleLeagueAnalysis);
+    }
+    if (statsSort) {
+        statsSort.addEventListener('change', () => renderPlayerStats(statsSort.value));
+    }
     
     // Rival comparison elements
     // Team Planner Section Elements
@@ -757,6 +778,127 @@ function resetSquad() {
     console.log("Squad has been reset.");
 }
 
+
+// --- New Dashboard Functions ---
+
+async function handleLeagueAnalysis() {
+    const leagueId = leagueIdInput.value;
+    const myTeamId = myTeamIdInput.value;
+    if (!leagueId) return alert("Please enter a League ID");
+
+    // Add check for currentGameweek
+    if (!currentGameweek) {
+        return alert("Data is still loading, please wait a moment.");
+    }
+
+    document.getElementById('statusMsg').textContent = "Fetching League Standings...";
+
+    try {
+        // 1. Fetch League Standings
+        const leagueUrl = CORS_PROXY_URL + encodeURIComponent(`https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`);
+        const res = await fetch(leagueUrl);
+        const data = await res.json();
+
+        const standings = data.standings.results;
+        renderLeagueTable(standings);
+
+        // 2. Analyze Threats (Top 10 Rivals)
+        document.getElementById('statusMsg').textContent = "Analyzing Rivals' Teams (this may take a moment)...";
+        await analyzeThreats(standings.slice(0, 10), myTeamId);
+
+        // 3. Render General Stats
+        renderPlayerStats('expected_goal_involvements');
+
+        document.getElementById('statusMsg').textContent = "Analysis Complete.";
+    } catch (e) {
+        console.error(e);
+        document.getElementById('statusMsg').textContent = "Error fetching data. Check ID.";
+    }
+}
+
+function renderLeagueTable(standings) {
+    if (!leagueTable) return;
+    leagueTable.innerHTML = standings.map(s => `
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 0.8rem;">${s.rank}</td>
+            <td style="padding: 0.8rem;"><strong>${s.entry_name}</strong><br><span style="font-size:0.8em; color:gray">${s.player_name}</span></td>
+            <td style="padding: 0.8rem;">${s.total}</td>
+        </tr>
+    `).join('');
+}
+
+async function analyzeThreats(topRivals, myTeamId) {
+    const playerCounts = {};
+    let myPlayers = [];
+
+    // Fetch My Team if ID provided
+    if (myTeamId) {
+        const myData = await fetchUserTeam(myTeamId, currentGameweek);
+        if (myData) myPlayers = myData.picks.map(p => p.element);
+    }
+
+    // Fetch Rival Teams Parallelly
+    const promises = topRivals.map(rival => fetchUserTeam(rival.entry, currentGameweek));
+    const rivalTeams = await Promise.all(promises);
+
+    rivalTeams.forEach(team => {
+        if (team && team.picks) {
+            team.picks.forEach(pick => {
+                playerCounts[pick.element] = (playerCounts[pick.element] || 0) + 1;
+            });
+        }
+    });
+
+    // Convert to Array, Filter out my players, Sort
+    const threats = Object.entries(playerCounts)
+        .map(([id, count]) => ({ id: parseInt(id), count }))
+        .filter(p => !myPlayers.includes(p.id)) // Remove players I own
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5); // Top 5 threats
+
+    // Render
+    if (threatList) {
+        threatList.innerHTML = threats.map(t => {
+            const player = getPlayerDetailsById(t.id);
+            const team = allTeamsData.find(tm => tm.id === player.team);
+            return `
+            <li style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${player.web_name}</strong>
+                    <span style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">Owned by ${t.count} rivals</span>
+                </div>
+                <div style="font-size: 0.85em; color: var(--gray);">
+                    ${team.short_name} | Next: 3 Fixtures...
+                </div>
+            </li>`;
+        }).join('');
+    }
+}
+
+function renderPlayerStats(sortKey) {
+    // Filter: Available and meaningful minutes
+    let players = allPlayersData.filter(p => p.status !== 'u' && p.minutes > 0);
+
+    // Sort
+    players.sort((a, b) => parseFloat(b[sortKey]) - parseFloat(a[sortKey]));
+
+    // Take top 20
+    if (statsBody) {
+        statsBody.innerHTML = players.slice(0, 20).map(p => {
+            const team = allTeamsData.find(t => t.id === p.team);
+            return `
+            <tr style="border-bottom: 1px solid #eee; hover:background: #f9f9f9;">
+                <td style="padding: 0.8rem;"><strong>${p.web_name}</strong></td>
+                <td style="padding: 0.8rem;">${team.short_name}</td>
+                <td style="padding: 0.8rem;">To be Calc</td>
+                <td style="padding: 0.8rem;">${p.form}</td>
+                <td style="padding: 0.8rem;">${p.expected_goals}</td>
+                <td style="padding: 0.8rem;">${p.expected_assists}</td>
+                <td style="padding: 0.8rem;">£${(p.now_cost / 10).toFixed(1)}</td>
+            </tr>`;
+        }).join('');
+    }
+}
 
 // Call initializeApp when the script loads
 initializeApp();

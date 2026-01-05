@@ -922,46 +922,76 @@
     </header>
     
     <section class="dashboard-demo" id="analysis">
-        <div class="container"> <!-- Use existing container class for consistent styling -->
-            <div class="section-title">
-                <h2>Analyse Your FPL Team</h2>
-                <p>Enter your FPL Team ID to get optimisation suggestions and compare with rivals.</p>
+        <div class="container">
+             <div class="section-title">
+                <h2>League & Stats Dashboard</h2>
+                <p>Analyze your mini-league, find threat ownership, and scout player stats.</p>
             </div>
 
-            <!-- Team Input Area -->
-            <div id="team-input-area" style="margin-bottom: 2rem; padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <label for="teamIdInput">Your FPL Team ID:</label>
-                <input type="number" id="teamIdInput" name="teamId" placeholder="Enter your Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <button id="fetchTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Analyse Team</button>
-                <span id="loadingIndicator" style="margin-left: 1rem; display: none;">Loading...</span>
-            </div>
-
-            <!-- User Team Display Area -->
-            <div id="userTeamDisplay" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <h3>Your Current Team</h3>
-                <div id="userTeamSquad">
-                    <!-- User's squad will be displayed here by JavaScript -->
+            <div class="input-group" style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3>Load Your League</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="number" id="leagueIdInput" placeholder="Enter League ID" style="padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                    <input type="number" id="myTeamIdInput" placeholder="Your Team ID (to exclude your players)" style="padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                    <button id="loadLeagueBtn" class="btn btn-primary">Analyze League</button>
                 </div>
-                <p>Total Expected Points (Next GW): <span id="userTeamEpNext">N/A</span></p>
+                <p id="statusMsg" style="margin-top: 1rem; color: var(--gray); font-style: italic;"></p>
             </div>
 
-            <!-- Optimisation Suggestions Area -->
-            <div id="optimisationSuggestions" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <h3>Optimisation Suggestions</h3>
-                <div id="suggestionsContent">
-                    <!-- Transfer suggestions will be displayed here by JavaScript -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-x: auto;">
+                    <h3 style="color: var(--primary); border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; margin-bottom: 1rem;">League Standings</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table id="leagueTable" style="width: 100%; text-align: left; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--light); color: var(--gray);">
+                                    <th style="padding: 0.5rem;">Rank</th>
+                                    <th style="padding: 0.5rem;">Team</th>
+                                    <th style="padding: 0.5rem;">Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 style="color: var(--warning); border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; margin-bottom: 1rem;">Biggest Threats</h3>
+                    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 1rem;">Players highly owned by your rivals that you don't own.</p>
+                    <ul id="threatList" class="feature-list" style="list-style: none;">
+                        </ul>
                 </div>
             </div>
 
-            <!-- Rival Comparison Area -->
-            <div id="rival-comparison-area" style="padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <h3>Compare with Rival</h3>
-                <label for="rivalTeamIdInput">Rival's FPL Team ID:</label>
-                <input type="number" id="rivalTeamIdInput" name="rivalTeamId" placeholder="Enter Rival's Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <button id="compareTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Compare</button>
-                <span id="rivalLoadingIndicator" style="margin-left: 1rem; display: none;">Loading rival...</span>
-                <div id="comparisonResults" style="margin-top: 1rem;">
-                    <!-- Comparison results will be displayed here by JavaScript -->
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-x: auto;">
+                <h3 style="color: var(--secondary); background: var(--primary); padding: 1rem; border-radius: 4px; color: white;">Player Stats & Clean Sheet Potential</h3>
+
+                <div style="margin: 1rem 0;">
+                    <label>Sort By: </label>
+                    <select id="statsSort" style="padding: 0.5rem;">
+                        <option value="expected_goal_involvements">xGI (Expected Goal Inv.)</option>
+                        <option value="form">Form (Last 30 days)</option>
+                        <option value="ict_index">ICT Index</option>
+                        <option value="goals_scored">Goals</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table id="statsTable" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--light);">
+                                <th style="padding: 1rem;">Player</th>
+                                <th style="padding: 1rem;">Team</th>
+                                <th style="padding: 1rem;">Next Opponent</th>
+                                <th style="padding: 1rem;">Form</th>
+                                <th style="padding: 1rem;">xG</th>
+                                <th style="padding: 1rem;">xA</th>
+                                <th style="padding: 1rem;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
