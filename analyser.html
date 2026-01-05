@@ -882,6 +882,155 @@
             background-color: #c82333;
         }
 
+        /* New Dashboard CSS Classes */
+        .dashboard-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .dashboard-card.no-scroll {
+            overflow-x: visible;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .input-group-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-input {
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .section-header-primary {
+            color: var(--primary);
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header-warning {
+            color: var(--warning);
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header-secondary {
+            background: var(--primary);
+            padding: 1rem;
+            border-radius: 4px;
+            color: white;
+        }
+
+        /* Table Styles */
+        .dashboard-table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        .dashboard-table thead tr {
+            background: var(--light);
+            color: var(--gray);
+        }
+
+        .dashboard-table th {
+            padding: 0.5rem;
+        }
+
+        .stats-table th {
+            padding: 1rem;
+        }
+
+        .league-table-row {
+            border-bottom: 1px solid #eee;
+        }
+
+        .league-table-cell {
+            padding: 0.8rem;
+        }
+
+        .manager-name {
+            font-size: 0.8em;
+            color: var(--gray);
+        }
+
+        .stats-table-row {
+            border-bottom: 1px solid #eee;
+        }
+
+        #statsTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .stats-table-cell {
+            padding: 0.8rem;
+        }
+
+        /* Threat List Styles */
+        .threat-item {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .threat-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .threat-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .threat-meta {
+            font-size: 0.85em;
+            color: var(--gray);
+        }
+
+        /* Utility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .text-gray {
+            color: var(--gray);
+        }
+
+        .text-small {
+            font-size: 0.9rem;
+        }
+
+        .mt-1 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 1rem; }
+        .my-1 { margin: 1rem 0; }
+
         /* Responsive adjustments for planner */
         @media (max-width: 992px) { /* Adjust breakpoint as needed */
             #team-planner-section .planner-content {
@@ -922,46 +1071,78 @@
     </header>
     
     <section class="dashboard-demo" id="analysis">
-        <div class="container"> <!-- Use existing container class for consistent styling -->
-            <div class="section-title">
-                <h2>Analyse Your FPL Team</h2>
-                <p>Enter your FPL Team ID to get optimisation suggestions and compare with rivals.</p>
+        <div class="container">
+             <div class="section-title">
+                <h2>League & Stats Dashboard</h2>
+                <p>Analyze your mini-league, find threat ownership, and scout player stats.</p>
             </div>
 
-            <!-- Team Input Area -->
-            <div id="team-input-area" style="margin-bottom: 2rem; padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <label for="teamIdInput">Your FPL Team ID:</label>
-                <input type="number" id="teamIdInput" name="teamId" placeholder="Enter your Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <button id="fetchTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Analyse Team</button>
-                <span id="loadingIndicator" style="margin-left: 1rem; display: none;">Loading...</span>
-            </div>
-
-            <!-- User Team Display Area -->
-            <div id="userTeamDisplay" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <h3>Your Current Team</h3>
-                <div id="userTeamSquad">
-                    <!-- User's squad will be displayed here by JavaScript -->
+            <div class="dashboard-card no-scroll">
+                <h3>Load Your League</h3>
+                <div class="input-group-container">
+                    <label for="leagueIdInput" class="sr-only">League ID</label>
+                    <input type="number" id="leagueIdInput" class="dashboard-input" placeholder="Enter League ID">
+                    <label for="myTeamIdInput" class="sr-only">Your Team ID</label>
+                    <input type="number" id="myTeamIdInput" class="dashboard-input" placeholder="Your Team ID (to exclude your players)">
+                    <button id="loadLeagueBtn" class="btn btn-primary">Analyze League</button>
                 </div>
-                <p>Total Expected Points (Next GW): <span id="userTeamEpNext">N/A</span></p>
+                <p id="statusMsg" class="mt-1 text-gray" style="font-style: italic;"></p>
             </div>
 
-            <!-- Optimisation Suggestions Area -->
-            <div id="optimisationSuggestions" style="margin-bottom: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                <h3>Optimisation Suggestions</h3>
-                <div id="suggestionsContent">
-                    <!-- Transfer suggestions will be displayed here by JavaScript -->
+            <div class="dashboard-grid">
+
+                <div class="dashboard-card">
+                    <h3 class="section-header-primary">League Standings</h3>
+                    <div class="table-container-scrollable">
+                        <table id="leagueTable" class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Team</th>
+                                    <th>Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 class="section-header-warning">Biggest Threats</h3>
+                    <p class="text-small text-gray mb-1">Players highly owned by your rivals that you don't own.</p>
+                    <ul id="threatList" style="list-style: none;">
+                    </ul>
                 </div>
             </div>
 
-            <!-- Rival Comparison Area -->
-            <div id="rival-comparison-area" style="padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <h3>Compare with Rival</h3>
-                <label for="rivalTeamIdInput">Rival's FPL Team ID:</label>
-                <input type="number" id="rivalTeamIdInput" name="rivalTeamId" placeholder="Enter Rival's Team ID" style="padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <button id="compareTeamButton" class="btn btn-primary" style="background-color: var(--primary); color: var(--secondary);">Compare</button>
-                <span id="rivalLoadingIndicator" style="margin-left: 1rem; display: none;">Loading rival...</span>
-                <div id="comparisonResults" style="margin-top: 1rem;">
-                    <!-- Comparison results will be displayed here by JavaScript -->
+            <div class="dashboard-card">
+                <h3 class="section-header-secondary">Player Stats & Clean Sheet Potential</h3>
+
+                <div class="my-1">
+                    <label>Sort By: </label>
+                    <select id="statsSort" style="padding: 0.5rem;">
+                        <option value="expected_goal_involvements">xGI (Expected Goal Inv.)</option>
+                        <option value="form">Form (Last 30 days)</option>
+                        <option value="ict_index">ICT Index</option>
+                        <option value="goals_scored">Goals</option>
+                    </select>
+                </div>
+
+                <div>
+                    <table id="statsTable" class="dashboard-table stats-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Team</th>
+                                <th>Next Opponent</th>
+                                <th>Form</th>
+                                <th>xG</th>
+                                <th>xA</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
