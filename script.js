@@ -7,6 +7,11 @@ let currentGameweek = null;
 // New Dashboard Variables
 let leagueIdInput, myTeamIdInput, loadLeagueBtn, leagueTable, threatList, statsBody, statsSort;
 
+// Constants
+const TOP_RIVALS_TO_ANALYZE = 10;
+const TOP_THREATS_TO_DISPLAY = 5;
+const TOP_PLAYERS_TO_DISPLAY = 20;
+
 const FPL_BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/';
 const CORS_PROXY_URL = '/api/fplproxy?url=';
 
@@ -784,14 +789,20 @@ function resetSquad() {
 async function handleLeagueAnalysis() {
     const leagueId = leagueIdInput.value;
     const myTeamId = myTeamIdInput.value;
-    if (!leagueId) return alert("Please enter a League ID");
+    const statusMsg = document.getElementById('statusMsg');
+
+    if (!leagueId) {
+        statusMsg.textContent = "Please enter a League ID";
+        return;
+    }
 
     // Add check for currentGameweek
     if (!currentGameweek) {
-        return alert("Data is still loading, please wait a moment.");
+        statusMsg.textContent = "Data is still loading, please wait a moment.";
+        return;
     }
 
-    document.getElementById('statusMsg').textContent = "Fetching League Standings...";
+    statusMsg.textContent = "Fetching League Standings...";
 
     try {
         // 1. Fetch League Standings
@@ -802,27 +813,27 @@ async function handleLeagueAnalysis() {
         const standings = data.standings.results;
         renderLeagueTable(standings);
 
-        // 2. Analyze Threats (Top 10 Rivals)
-        document.getElementById('statusMsg').textContent = "Analyzing Rivals' Teams (this may take a moment)...";
-        await analyzeThreats(standings.slice(0, 10), myTeamId);
+        // 2. Analyze Threats
+        statusMsg.textContent = "Analyzing Rivals' Teams (this may take a moment)...";
+        await analyzeThreats(standings.slice(0, TOP_RIVALS_TO_ANALYZE), myTeamId);
 
         // 3. Render General Stats
         renderPlayerStats('expected_goal_involvements');
 
-        document.getElementById('statusMsg').textContent = "Analysis Complete.";
+        statusMsg.textContent = "Analysis Complete.";
     } catch (e) {
         console.error(e);
-        document.getElementById('statusMsg').textContent = "Error fetching data. Check ID.";
+        statusMsg.textContent = "Error fetching data. Check ID.";
     }
 }
 
 function renderLeagueTable(standings) {
     if (!leagueTable) return;
     leagueTable.innerHTML = standings.map(s => `
-        <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 0.8rem;">${s.rank}</td>
-            <td style="padding: 0.8rem;"><strong>${s.entry_name}</strong><br><span style="font-size:0.8em; color:gray">${s.player_name}</span></td>
-            <td style="padding: 0.8rem;">${s.total}</td>
+        <tr class="league-table-row">
+            <td class="league-table-cell">${s.rank}</td>
+            <td class="league-table-cell"><strong>${s.entry_name}</strong><br><span class="manager-name">${s.player_name}</span></td>
+            <td class="league-table-cell">${s.total}</td>
         </tr>
     `).join('');
 }
@@ -854,7 +865,7 @@ async function analyzeThreats(topRivals, myTeamId) {
         .map(([id, count]) => ({ id: parseInt(id), count }))
         .filter(p => !myPlayers.includes(p.id)) // Remove players I own
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Top 5 threats
+        .slice(0, TOP_THREATS_TO_DISPLAY);
 
     // Render
     if (threatList) {
@@ -862,13 +873,13 @@ async function analyzeThreats(topRivals, myTeamId) {
             const player = getPlayerDetailsById(t.id);
             const team = allTeamsData.find(tm => tm.id === player.team);
             return `
-            <li style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
-                <div style="display:flex; justify-content:space-between;">
+            <li class="threat-item">
+                <div class="threat-header">
                     <strong>${player.web_name}</strong>
-                    <span style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">Owned by ${t.count} rivals</span>
+                    <span class="threat-badge">Owned by ${t.count} rivals</span>
                 </div>
-                <div style="font-size: 0.85em; color: var(--gray);">
-                    ${team.short_name} | Next: 3 Fixtures...
+                <div class="threat-meta">
+                    ${team.short_name}
                 </div>
             </li>`;
         }).join('');
@@ -884,17 +895,17 @@ function renderPlayerStats(sortKey) {
 
     // Take top 20
     if (statsBody) {
-        statsBody.innerHTML = players.slice(0, 20).map(p => {
+        statsBody.innerHTML = players.slice(0, TOP_PLAYERS_TO_DISPLAY).map(p => {
             const team = allTeamsData.find(t => t.id === p.team);
             return `
-            <tr style="border-bottom: 1px solid #eee; hover:background: #f9f9f9;">
-                <td style="padding: 0.8rem;"><strong>${p.web_name}</strong></td>
-                <td style="padding: 0.8rem;">${team.short_name}</td>
-                <td style="padding: 0.8rem;">To be Calc</td>
-                <td style="padding: 0.8rem;">${p.form}</td>
-                <td style="padding: 0.8rem;">${p.expected_goals}</td>
-                <td style="padding: 0.8rem;">${p.expected_assists}</td>
-                <td style="padding: 0.8rem;">£${(p.now_cost / 10).toFixed(1)}</td>
+            <tr class="stats-table-row">
+                <td class="stats-table-cell"><strong>${p.web_name}</strong></td>
+                <td class="stats-table-cell">${team.short_name}</td>
+                <td class="stats-table-cell">-</td>
+                <td class="stats-table-cell">${p.form}</td>
+                <td class="stats-table-cell">${p.expected_goals}</td>
+                <td class="stats-table-cell">${p.expected_assists}</td>
+                <td class="stats-table-cell">£${(p.now_cost / 10).toFixed(1)}</td>
             </tr>`;
         }).join('');
     }

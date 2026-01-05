@@ -882,6 +882,156 @@
             background-color: #c82333;
         }
 
+        /* New Dashboard CSS Classes */
+        .dashboard-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .dashboard-card.no-scroll {
+            overflow-x: visible;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .input-group-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-input {
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .section-header-primary {
+            color: var(--primary);
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header-warning {
+            color: var(--warning);
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header-secondary {
+            color: var(--secondary);
+            background: var(--primary);
+            padding: 1rem;
+            border-radius: 4px;
+            color: white;
+        }
+
+        /* Table Styles */
+        .dashboard-table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        .dashboard-table thead tr {
+            background: var(--light);
+            color: var(--gray);
+        }
+
+        .dashboard-table th {
+            padding: 0.5rem;
+        }
+
+        .stats-table th {
+            padding: 1rem;
+        }
+
+        .league-table-row {
+            border-bottom: 1px solid #eee;
+        }
+
+        .league-table-cell {
+            padding: 0.8rem;
+        }
+
+        .manager-name {
+            font-size: 0.8em;
+            color: gray;
+        }
+
+        .stats-table-row {
+            border-bottom: 1px solid #eee;
+        }
+
+        #statsTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .stats-table-cell {
+            padding: 0.8rem;
+        }
+
+        /* Threat List Styles */
+        .threat-item {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .threat-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .threat-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .threat-meta {
+            font-size: 0.85em;
+            color: var(--gray);
+        }
+
+        /* Utility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .text-gray {
+            color: var(--gray);
+        }
+
+        .text-small {
+            font-size: 0.9rem;
+        }
+
+        .mt-1 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 1rem; }
+        .my-1 { margin: 1rem 0; }
+
         /* Responsive adjustments for planner */
         @media (max-width: 992px) { /* Adjust breakpoint as needed */
             #team-planner-section .planner-content {
@@ -928,27 +1078,29 @@
                 <p>Analyze your mini-league, find threat ownership, and scout player stats.</p>
             </div>
 
-            <div class="input-group" style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div class="dashboard-card no-scroll">
                 <h3>Load Your League</h3>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <input type="number" id="leagueIdInput" placeholder="Enter League ID" style="padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
-                    <input type="number" id="myTeamIdInput" placeholder="Your Team ID (to exclude your players)" style="padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                <div class="input-group-container">
+                    <label for="leagueIdInput" class="sr-only">League ID</label>
+                    <input type="number" id="leagueIdInput" class="dashboard-input" placeholder="Enter League ID">
+                    <label for="myTeamIdInput" class="sr-only">Your Team ID</label>
+                    <input type="number" id="myTeamIdInput" class="dashboard-input" placeholder="Your Team ID (to exclude your players)">
                     <button id="loadLeagueBtn" class="btn btn-primary">Analyze League</button>
                 </div>
-                <p id="statusMsg" style="margin-top: 1rem; color: var(--gray); font-style: italic;"></p>
+                <p id="statusMsg" class="mt-1 text-gray" style="font-style: italic;"></p>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div class="dashboard-grid">
 
-                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-x: auto;">
-                    <h3 style="color: var(--primary); border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; margin-bottom: 1rem;">League Standings</h3>
+                <div class="dashboard-card">
+                    <h3 class="section-header-primary">League Standings</h3>
                     <div style="max-height: 400px; overflow-y: auto;">
-                        <table id="leagueTable" style="width: 100%; text-align: left; border-collapse: collapse;">
+                        <table id="leagueTable" class="dashboard-table">
                             <thead>
-                                <tr style="background: var(--light); color: var(--gray);">
-                                    <th style="padding: 0.5rem;">Rank</th>
-                                    <th style="padding: 0.5rem;">Team</th>
-                                    <th style="padding: 0.5rem;">Pts</th>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Team</th>
+                                    <th>Pts</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -956,18 +1108,18 @@
                     </div>
                 </div>
 
-                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <h3 style="color: var(--warning); border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; margin-bottom: 1rem;">Biggest Threats</h3>
-                    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 1rem;">Players highly owned by your rivals that you don't own.</p>
+                <div class="dashboard-card">
+                    <h3 class="section-header-warning">Biggest Threats</h3>
+                    <p class="text-small text-gray mb-1">Players highly owned by your rivals that you don't own.</p>
                     <ul id="threatList" class="feature-list" style="list-style: none;">
-                        </ul>
+                    </ul>
                 </div>
             </div>
 
-            <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-x: auto;">
-                <h3 style="color: var(--secondary); background: var(--primary); padding: 1rem; border-radius: 4px; color: white;">Player Stats & Clean Sheet Potential</h3>
+            <div class="dashboard-card">
+                <h3 class="section-header-secondary">Player Stats & Clean Sheet Potential</h3>
 
-                <div style="margin: 1rem 0;">
+                <div class="my-1">
                     <label>Sort By: </label>
                     <select id="statsSort" style="padding: 0.5rem;">
                         <option value="expected_goal_involvements">xGI (Expected Goal Inv.)</option>
@@ -978,16 +1130,16 @@
                 </div>
 
                 <div style="overflow-x: auto;">
-                    <table id="statsTable" style="width: 100%; border-collapse: collapse;">
+                    <table id="statsTable" class="dashboard-table stats-table">
                         <thead>
-                            <tr style="background: var(--light);">
-                                <th style="padding: 1rem;">Player</th>
-                                <th style="padding: 1rem;">Team</th>
-                                <th style="padding: 1rem;">Next Opponent</th>
-                                <th style="padding: 1rem;">Form</th>
-                                <th style="padding: 1rem;">xG</th>
-                                <th style="padding: 1rem;">xA</th>
-                                <th style="padding: 1rem;">Price</th>
+                            <tr>
+                                <th>Player</th>
+                                <th>Team</th>
+                                <th>Next Opponent</th>
+                                <th>Form</th>
+                                <th>xG</th>
+                                <th>xA</th>
+                                <th>Price</th>
                             </tr>
                         </thead>
                         <tbody id="statsBody"></tbody>
